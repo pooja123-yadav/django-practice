@@ -18,3 +18,5 @@ def create_feature_toggle_db(post_data):
     if serializer.is_valid():
         serializer.save()
         return serializer.data
+    else:
+        return "error"
