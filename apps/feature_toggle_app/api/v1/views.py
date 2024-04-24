@@ -6,8 +6,7 @@ from apps.feature_toggle_app.models import FeatureToggle
 from .serializers import FeatureToggleSerializer
 from rest_framework.permissions import IsAuthenticated
 from utils.network_helper.responses import raise_error, RESPONSES, prepare_response
-from .controller import get_feature_toggle_list
-
+from .controller import get_feature_toggle_list, create_feature_toggle, get_feature_toggle_detail_by_identifier, bulk_update_toggle_state, bulk_update_toggle_environment
 
 class ToggleAPIView(APIView):
 
@@ -32,28 +31,22 @@ class ToggleAPIView(APIView):
             except ValueError:
                 raise_error(RESPONSES.ERRORS.VALIDATIONS.INVALID_ENVIRONMENT)
         
-        # Filter feature toggles based on query parameters
-        # feature_toggles = FeatureToggle.objects.all()
-        # if state is not None:
-        #     feature_toggles = feature_toggles.filter(state=state)
-        # if environment is not None:
-        #     feature_toggles = feature_toggles.filter(environment=environment)
+        filters = dict()
+        if state is not None:
+            filters.update({"state":state})
+        if environment is not None:
+            filters.update({"environment":environment})
 
-        # # Serialize the filtered feature toggles
-        # serializer = FeatureToggleSerializer(feature_toggles, many=True)
-        result = get_feature_toggle_list()
-        return prepare_response(data=serializer.data)
+        result = get_feature_toggle_list(filters)
+
+        return prepare_response(data=result)
         
 
     def post(self, request):
         post_data = request.data
         post_data.update({"created_by": request.user.id}) 
-        serializer = FeatureToggleSerializer(data=post_data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        create_feature_toggle(data=post_data)
+        return prepare_response(response=RESPONSES.GENERIC.CREATED, data=[])
 
 
 class FeatureToggleDetailAPIView(APIView):
@@ -64,10 +57,61 @@ class FeatureToggleDetailAPIView(APIView):
        
         identifier = request.query_params.get('identifier')
 
-        try:
-            feature_toggle = FeatureToggle.objects.get(identifier=identifier)
-        except FeatureToggle.DoesNotExist:
-            raise NotFound("Feature toggle not found.")
+        if not identifier:
+            raise_error(RESPONSES.ERRORS.VALIDATIONS.INVALID_TOGGLE_IDENTIFIER)
 
-        serializer = FeatureToggleSerializer(feature_toggle)
-        return Response(serializer.data)
+        result = get_feature_toggle_detail_by_identifier(identifier=identifier)
+        
+        return prepare_response(data=result)
+    
+
+class FeatureToggleActivateDeactivateAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]  
+
+    def post(self, request, *args, **kwargs):
+        body = request.data
+        toggle_ids = body.get('ids', [])
+        toggle_state_status = body.get('state')
+
+        if not toggle_ids or (not isinstance(toggle_ids, list)):
+            raise_error(RESPONSES.ERRORS.VALIDATIONS.ID_LIST_REQUIRED)
+
+        if toggle_state_status is None:
+            raise_error(
+                RESPONSES.ERRORS.VALIDATIONS.INVALID_ACTIVE_INACTIVE_STATUS)
+          
+        metadata = {"updated_by": request.user.id}
+
+        if body.get('notes'):
+            metadata['notes'] = body.get('notes')
+
+        status_updated_count = bulk_update_toggle_state(toggle_ids=toggle_ids, state=toggle_state_status, metadata=metadata)
+
+        return prepare_response(RESPONSES.GENERIC.SUCCESS, data=status_updated_count)
+    
+
+class FeatureToggleChangeEnvironmentAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]  
+
+    def post(self, request, *args, **kwargs):
+        body = request.data
+        toggle_ids = body.get('ids', [])
+        environment = body.get('environment')
+
+        if not toggle_ids or (not isinstance(toggle_ids, list)):
+            raise_error(RESPONSES.ERRORS.VALIDATIONS.ID_LIST_REQUIRED)
+
+        if environment is None:
+            raise_error(RESPONSES.ERRORS.VALIDATIONS.INVALID_ACTIVE_INACTIVE_STATUS)
+
+        metadata = {"updated_by": request.user.id}
+
+        if body.get('notes'):
+            metadata['notes'] = body.get('notes')
+
+        environment_updated_count = bulk_update_toggle_environment(toggle_ids=toggle_ids, environment=environment, metadata=metadata)
+
+        return prepare_response(RESPONSES.GENERIC.SUCCESS, data=environment_updated_count)
+

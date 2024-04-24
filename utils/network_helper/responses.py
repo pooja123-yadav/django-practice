@@ -6,20 +6,27 @@ from middlewares.exceptions import CustomError
 
 class RESPONSES:
     class GENERIC:
-        SUCCESS = (101, "Success", 200)
-        FAILURE = (102, "Oops, Something went wrong!", 500)
-        UNAUTHORIZED = (103, "Unauthorized", 401)
+        SUCCESS           = (101, "Success", 200)
+        FAILURE           = (102, "Oops, Something went wrong!", 500)
+        UNAUTHORIZED      = (103, "Unauthorized", 401)
         PERMISSION_DENIED = (105, "Permission Denied", 401)
+        CREATED           = (201, "Created", 201)
 
     class INVALID:
         NETWORK_CALL = (201, "Invalid Request in network call", 500)
         
     class ERRORS:
         class VALIDATIONS:
-            MAX_LOGIN_RETRIES   = (405, "Max login attempt exceeded", 400)
-            INVALID_STATE       = (406, "State parameter must be an integer.", 400)
-            INVALID_ENVIRONMENT = (407, "Environment parameter must be an integer.", 400)
+            MAX_LOGIN_RETRIES             = (405, "Max login attempt exceeded", 400)
+            INVALID_STATE                 = (406, "State parameter must be an integer.", 400)
+            INVALID_ENVIRONMENT           = (407, "Environment parameter must be an integer.", 400)
             TOGGLE_DATA_VALIDATION_FAILED = (408, "Toggle data validation failed", 400)
+            TOGGLE_DATA_VALIDATION_FAILED = (408, "Toggle data validation failed", 400)
+            INVALID_TOGGLE_IDENTIFIER     = (410, "Invalid identifier filter", 400)
+            ID_LIST_REQUIRED              = (411, "Toggle ID list is required", 400)
+            INVALID_ACTIVE_INACTIVE_STATUS = (412, "Invalid Active/Inactive Status", 400)
+
+
 
     class FeatureToggle:
         class ERRORS:
