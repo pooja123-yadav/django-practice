@@ -15,8 +15,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/account/', include('apps.accounts.urls')), # just to get user auth token thats why no versioning here
+    path('api/v1/feature-toggle/', include('apps.feature_toggle_app.api.v1.urls'))
 ]
