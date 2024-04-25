@@ -15,7 +15,8 @@ class ToggleAPIView(APIView):
     '''
     def get(self, request):
 
-        # Extract filters from query parameters
+        # Extract filters from query parameters 
+        # for now only two params added
         state = request.query_params.get('state')
         environment = request.query_params.get('environment')
         page = request.query_params.get('page', 1)
