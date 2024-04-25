@@ -12,6 +12,7 @@ def get_feature_toggle_list_with_filters_db(filters, page, limit):
 
     # Adding pagination 
     paginated_response = get_paginated_response(feature_toggles, page, limit)
+    
     # Serialize the filtered feature toggles
     serialized_object_list = FeatureToggleSerializer(paginated_response['object_list'], many=True)
     paginated_response['object_list'] = serialized_object_list.data
